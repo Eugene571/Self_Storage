@@ -5,9 +5,10 @@ from django.utils.timezone import now, timedelta
 class Warehouse(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
+    adress = models.CharField(max_length=200)
 
     def __str__(self):
-        return f'{self.name}'
+        return f'{self.name}, {self.adress}'
 
 
 class CellTariff(models.Model):
@@ -21,15 +22,13 @@ class CellTariff(models.Model):
 class Cell(models.Model):
     cell_size = models.ForeignKey(CellTariff,
                                   on_delete=models.CASCADE)
-    is_occupied = models.BooleanField(null=True)
-    start_storage = models.DateTimeField(null=True, blank=True)
-    end_storage = models.DateTimeField(null=True, blank=True)
+    is_occupied = models.BooleanField(default=False)
     address = models.ForeignKey(Warehouse, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f'{self.id}, {self.cell_size.size}'
 
-    def save(self, days=None, *args, **kwargs):  # метод для сохранения или обнуления сроков хранения
+    def save(self, days=None, *args, **kwargs):
         if self.is_occupied:
             self.start_storage = now()
             if days is not None:
@@ -50,11 +49,10 @@ class Client(models.Model):
 
 class Order(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    contacts = models.CharField(max_length=100)
-    start_storage = models.DateTimeField()
-    end_storage = models.DateTimeField()
-    address = models.CharField(max_length=200)
-    cell = models.ForeignKey(Cell, on_delete=models.CASCADE)  # на случай если в заказе может быть только одна ячейка
+    contacts = models.CharField(max_length=100, blank=True)
+    start_storage = models.DateField()
+    end_storage = models.DateField()
+    cell = models.ForeignKey(Cell, on_delete=models.CASCADE)
     total_price = models.DecimalField(max_digits=10, decimal_places=2,
                                       blank=True, null=True)
 
@@ -68,6 +66,8 @@ class Order(models.Model):
         super().save(*args, **kwargs)
 
 
-from django.db import models
+class ClickCounter(models.Model):
+    clicks = models.IntegerField()
 
-# Create your models here.
+    def __str__(self):
+        return f"{self.clicks}"
